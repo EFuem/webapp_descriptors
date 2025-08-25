@@ -13,42 +13,43 @@ calculator = mace_mp(model="medium")
 # 2. Load structures
 # ----------------------------------------------------
 # Assume two datasets stored in .xyz files (can be CIF/POSCAR etc.)
-dataset_A = read("DS_h0mshvvbxlai_0_0.xyz", index=":25")
+#dataset_A = read("DS_h0mshvvbxlai_0_0.xyz", index=":25")
 #dataset_B = read("DS_qph0akhjv9kv_0_0.xyz", index=":25")
-dataset_B = read("DS_z3s0qui5vg5c_0_0.xyz", index=":25")
+#dataset_B = read("DS_z3s0qui5vg5c_0_0.xyz", index=":25")
 # ----------------------------------------------------
 # 3. Generate embeddings
 # ----------------------------------------------------
-def get_embeddings(structures):
+def get_embeddings(atoms):
     """Return list of structure embeddings (mean-pooled atom embeddings)."""
-    embeddings = []
-    for atoms in tqdm(structures):
-        # get dictionary with energy, forces, per-atom features
-        results = calculator.get_descriptors(atoms)
-        # results["atomic_features"]: shape (n_atoms, d)
-        atom_embs = results
-        #print(atom_embs.shape, results[-2].shape)
-        # aggregate per-structure (mean-pooling)
-        struct_emb = atom_embs.mean(axis=0)
-        embeddings.append(struct_emb)
-    return np.vstack(embeddings).astype(np.float32)
+    #embeddings = []
+    #for atoms in tqdm(structures):
+    # get dictionary with energy, forces, per-atom features
+    results = calculator.get_descriptors(atoms)
+    # results["atomic_features"]: shape (n_atoms, d)
+    atom_embs = results
+    #print(atom_embs.shape, results[-2].shape)
+    # aggregate per-structure (mean-pooling)
+    struct_emb = atom_embs.mean(axis=0)
+    #embeddings.append(struct_emb)
+    return struct_emb
+    #return np.vstack(embeddings).astype(np.float32)
 
-emb_A = get_embeddings(dataset_A)   # shape (nA, d)
-emb_B = get_embeddings(dataset_B)   # shape (nB, d)
+#emb_A = get_embeddings(dataset_A)   # shape (nA, d)
+#emb_B = get_embeddings(dataset_B)   # shape (nB, d)
 
-print("Dataset A:", emb_A.shape, "Dataset B:", emb_B.shape)
+#print("Dataset A:", emb_A.shape, "Dataset B:", emb_B.shape)
 
 # ----------------------------------------------------
 # 4. Dataset-level fingerprints
 # ----------------------------------------------------
 # (a) Simple mean embedding
-fp_A = emb_A.mean(axis=0)
-fp_B = emb_B.mean(axis=0)
+#fp_A = emb_A.mean(axis=0)
+#fp_B = emb_B.mean(axis=0)
 
 # (b) Gaussian approx (mean + covariance diag)
-mu_A, mu_B = fp_A, fp_B
-cov_A = emb_A.var(axis=0)
-cov_B = emb_B.var(axis=0)
+#mu_A, mu_B = fp_A, fp_B
+#cov_A = emb_A.var(axis=0)
+#cov_B = emb_B.var(axis=0)
 
 # ----------------------------------------------------
 # 5. Compare datasets
@@ -62,8 +63,8 @@ def frechet_distance(mu1, cov1, mu2, cov2):
     cov_diff = np.sum(cov1 + cov2 - 2 * np.sqrt(cov1 * cov2))
     return diff + cov_diff
 
-print("Cosine similarity:", cosine_similarity(fp_A, fp_B))
-print("Fréchet distance:", frechet_distance(mu_A, cov_A, mu_B, cov_B))
+#print("Cosine similarity:", cosine_similarity(fp_A, fp_B))
+#print("Fréchet distance:", frechet_distance(mu_A, cov_A, mu_B, cov_B))
 
 # ----------------------------------------------------
 # 6. Per-structure similarity search (FAISS demo)

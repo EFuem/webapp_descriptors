@@ -1,6 +1,11 @@
 import vastdb
 from vastdb.config import QueryConfig
 import os
+import sys
+from ase import Atoms
+from ast import literal_eval
+from generate_descriptors import get_embeddings
+from tqdm import tqdm
 
 def get_vastdb_session():
     endpoint = "http://10.32.38.210"
@@ -17,18 +22,18 @@ config = QueryConfig(
     rows_per_split=1_000_000,
     num_sub_splits=10,
 )
-dataset_id = ""
+dataset_id = "DS_h0mshvvbxlai_0"
 
 with session.transaction() as tx:
     co_table = (
         tx.bucket("colabfit-prod").schema("prod").table("co_po_merged_innerjoin")
     )
-    logger.info(f"Querying co_po_merged_innerjoin for dataset_id: {dataset_id}")
     co_data = co_table.select(
         predicate=co_table["dataset_id"] == dataset_id, config=config
     )
-    for i, co_batch in enumerate(co_data):
-        for co in co_batch:
-        # convert to ase Atoms object
-        # compute descriptors
-        # save to file
+    for i, co_batch in tqdm(enumerate(co_data)):
+        batch_list = co_batch.to_pylist()
+        for b in batch_list:
+            atoms = Atoms(positions = literal_eval(b['positions']), numbers = literal_eval(b['atomic_numbers']), cell = literal_eval(b['cell']), pbc = literal_eval(b['pbc']))
+            e = get_embeddings(atoms)
+
