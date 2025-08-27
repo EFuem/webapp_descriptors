@@ -13,7 +13,7 @@ calculator = mace_mp(model="medium")
 # 2. Load structures
 # ----------------------------------------------------
 # Assume two datasets stored in .xyz files (can be CIF/POSCAR etc.)
-#dataset_A = read("DS_h0mshvvbxlai_0_0.xyz", index=":25")
+dataset_A = read("DS_h0mshvvbxlai_0_0.xyz", index=":100")
 #dataset_B = read("DS_qph0akhjv9kv_0_0.xyz", index=":25")
 #dataset_B = read("DS_z3s0qui5vg5c_0_0.xyz", index=":25")
 # ----------------------------------------------------
@@ -26,15 +26,21 @@ def get_embeddings(atoms):
     # get dictionary with energy, forces, per-atom features
     results = calculator.get_descriptors(atoms)
     # results["atomic_features"]: shape (n_atoms, d)
-    atom_embs = results
+    atom_embs, idx = results
     #print(atom_embs.shape, results[-2].shape)
     # aggregate per-structure (mean-pooling)
-    struct_emb = atom_embs.mean(axis=0)
+    emb = []
+    for n in range(len(atoms)):
+        indices = [i for i, x in enumerate(idx) if x == n]
+        struct_emb = atom_embs[indices]
+        print (struct_emb.shape)
+        emb.append(struct_emb.mean(axis=0))
     #embeddings.append(struct_emb)
-    return struct_emb
+    return emb
     #return np.vstack(embeddings).astype(np.float32)
-
-#emb_A = get_embeddings(dataset_A)   # shape (nA, d)
+for i in range(10):
+    emb_A = get_embeddings(dataset_A[i*10:(i+1)*10])   # shape (nA, d)
+sys.exit()
 #emb_B = get_embeddings(dataset_B)   # shape (nB, d)
 
 #print("Dataset A:", emb_A.shape, "Dataset B:", emb_B.shape)
